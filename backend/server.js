@@ -18,7 +18,7 @@ ensureDirectory(streamDir);
 
 app.use(express.json());
 
-// CORS for frontend (e.g. Next.js on port 3001)
+// CORS for frontend (allow your frontend origin)
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -76,7 +76,7 @@ wss.on("connection", (ws) => {
   });
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 9001;
 
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);

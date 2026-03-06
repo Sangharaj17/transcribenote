@@ -4,7 +4,7 @@ const { streamDir, transcriptDir } = require("../config/paths");
 const { ensureDirectory } = require("../utils/file.utils");
 const mergeService = require("../services/merge.service");
 const whisperService = require("../services/whisper.service");
-const { pool } = require("../config/db");
+const { supabase } = require("../config/db");
 
 /**
  * Packet: receive one audio chunk (multipart form).
@@ -89,10 +89,13 @@ exports.finishStreamSession = async (req, res) => {
     if (stat.size < minBytes) {
       const shortMessage = "[Recording too short to transcribe. Speak for at least 2 seconds.]";
       try {
-        await pool.query(
-          "INSERT INTO transcripts (user_id, recording_session_id, transcript_text, audio_path) VALUES ($1, $2, $3, $4)",
-          [userId, sessionId, shortMessage, null]
-        );
+        const { error } = await supabase.from("transcripts").insert({
+          user_id: userId,
+          recording_session_id: sessionId,
+          transcript_text: shortMessage,
+          audio_path: null,
+        });
+        if (error) console.error("DB save short:", error.message);
       } catch (_) {}
       return res.json({
         success: true,
@@ -110,10 +113,19 @@ exports.finishStreamSession = async (req, res) => {
     fs.writeFileSync(transcriptSavePath, cleaned, "utf8");
 
     try {
-      await pool.query(
-        "INSERT INTO transcripts (user_id, recording_session_id, transcript_text, audio_path) VALUES ($1, $2, $3, $4)",
-        [userId, sessionId, cleaned, transcriptFilename]
-      );
+      const { error } = await supabase.from("transcripts").insert({
+        user_id: userId,
+        recording_session_id: sessionId,
+        transcript_text: cleaned,
+        audio_path: transcriptFilename,
+      });
+      if (error) {
+        console.error("DB save failed:", error.message);
+        return res.status(500).json({
+          success: false,
+          error: "Failed to save recording. " + (error.message || "Database error"),
+        });
+      }
     } catch (dbErr) {
       console.error("DB save failed:", dbErr.message);
       return res.status(500).json({
