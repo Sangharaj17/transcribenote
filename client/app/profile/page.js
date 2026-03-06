@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:9001";
 
 function formatDate(isoString) {
   const d = new Date(isoString);
@@ -26,6 +26,9 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [mounted, setMounted] = useState(false);
+  const [edits, setEdits] = useState({});
+  const [savingId, setSavingId] = useState(null);
+  const [saveMessage, setSaveMessage] = useState({ type: "", text: "" });
 
   useEffect(() => {
     setMounted(true);
@@ -42,7 +45,7 @@ export default function ProfilePage() {
     }
   }, [mounted, token, router]);
 
-  useEffect(() => {
+  const fetchNotes = useCallback(() => {
     if (!token) return;
     setLoading(true);
     setError("");
@@ -65,6 +68,46 @@ export default function ProfilePage() {
       })
       .finally(() => setLoading(false));
   }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    fetchNotes();
+  }, [token, fetchNotes]);
+
+  const getDisplayText = (note) => (edits[note.id] !== undefined ? edits[note.id] : (note.transcript_text ?? ""));
+  const setNoteEdit = (noteId, text) => setEdits((prev) => ({ ...prev, [noteId]: text }));
+
+  const handleSave = async (note) => {
+    const text = getDisplayText(note);
+    setSavingId(note.id);
+    setSaveMessage({ type: "", text: "" });
+    try {
+      const res = await fetch(`${API_BASE}/api/notes/${note.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ transcript_text: text }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setNotes((prev) => prev.map((n) => (n.id === note.id ? { ...n, transcript_text: text } : n)));
+        setEdits((prev) => {
+          const next = { ...prev };
+          delete next[note.id];
+          return next;
+        });
+        setSaveMessage({ type: "success", text: "Saved." });
+      } else {
+        setSaveMessage({ type: "error", text: data?.error || "Failed to save" });
+      }
+    } catch (e) {
+      setSaveMessage({ type: "error", text: "Connection error" });
+    } finally {
+      setSavingId(null);
+    }
+  };
 
   if (mounted && !token) {
     return (
@@ -136,6 +179,11 @@ export default function ProfilePage() {
 
         {!loading && !error && notes.length > 0 && (
           <div className="space-y-4">
+            {saveMessage.text && (
+              <p className={saveMessage.type === "success" ? "text-emerald-400 text-sm" : "text-amber-400 text-sm"}>
+                {saveMessage.text}
+              </p>
+            )}
             {notes.map((note) => (
               <article
                 key={note.id}
@@ -144,9 +192,22 @@ export default function ProfilePage() {
                 <time className="text-xs text-zinc-500 block mb-2">
                   {formatDate(note.created_at)}
                 </time>
-                <p className="text-zinc-200 whitespace-pre-wrap text-sm leading-relaxed">
-                  {note.transcript_text || "(empty)"}
-                </p>
+                <textarea
+                  value={getDisplayText(note)}
+                  onChange={(e) => setNoteEdit(note.id, e.target.value)}
+                  placeholder="(empty)"
+                  rows={6}
+                  className="w-full rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-200 text-sm leading-relaxed p-3 resize-y focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+                <div className="mt-3 flex justify-end">
+                  <button
+                    onClick={() => handleSave(note)}
+                    disabled={savingId === note.id}
+                    className="py-2 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+                  >
+                    {savingId === note.id ? "Saving…" : "Save"}
+                  </button>
+                </div>
               </article>
             ))}
           </div>

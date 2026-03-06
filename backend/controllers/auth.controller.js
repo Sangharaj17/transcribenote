@@ -27,8 +27,8 @@ exports.signup = async (req, res) => {
       .single();
     if (error) {
       if (error.code === "23505") return res.status(400).json({ error: "Email already registered" });
-      console.error(error);
-      return res.status(500).json({ error: "Sign up failed" });
+      console.error("[auth/signup] Supabase error:", error.code, error.message, error.details);
+      return res.status(500).json({ error: "Sign up failed. Check server logs." });
     }
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "7d" });
     res.json({ token, user: { id: user.id, email: user.email } });

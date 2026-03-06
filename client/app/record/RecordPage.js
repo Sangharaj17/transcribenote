@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:9001";
 const CHUNK_MS = 2000; // send audio to server every 2s
 const SAMPLE_RATE = 16000;
 
@@ -18,7 +18,7 @@ const AUDIO_CONSTRAINTS = {
 };
 
 function getWsUrl() {
-  const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+  const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:9001";
   const wsBase = base.replace(/^http/, "ws").replace(/\/$/, "");
   return `${wsBase}/live`;
 }

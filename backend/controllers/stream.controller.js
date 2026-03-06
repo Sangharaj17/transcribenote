@@ -91,12 +91,23 @@ exports.finishStreamSession = async (req, res) => {
     const minBytes = 48000; // ~1.5 sec of 16kHz mono 16-bit
     if (stat.size < minBytes) {
       const shortMessage = "[Recording too short to transcribe. Speak for at least 2 seconds.]";
+
+      // Always write a transcript file so users can find it locally.
+      ensureDirectory(transcriptDir);
+      const transcriptFilename = `stream_${sessionId}.txt`;
+      const transcriptSavePath = path.join(transcriptDir, transcriptFilename);
+      try {
+        fs.writeFileSync(transcriptSavePath, shortMessage, "utf8");
+      } catch (e) {
+        console.error("[finish-stream] Failed to write short transcript file:", e.message);
+      }
+
       try {
         const { error } = await supabase.from("transcripts").insert({
           user_id: userId,
           recording_session_id: sessionId,
           transcript_text: shortMessage,
-          audio_path: null,
+          audio_path: transcriptFilename,
         });
         if (error) console.error("DB save short:", error.message);
         else console.log("[finish-stream] Saved short message for user", userId.slice(0, 8) + "...");
@@ -104,7 +115,7 @@ exports.finishStreamSession = async (req, res) => {
       return res.json({
         success: true,
         transcript: shortMessage,
-        saved: null
+        saved: transcriptSavePath
       });
     }
 

@@ -39,6 +39,8 @@ Use your actual Project URL and service_role key from step 2.
 
 The `users` and `transcripts` tables will be created.
 
+**Where to see users:** In Supabase Dashboard go to **Table Editor** → **users** (public schema). App signups are stored there. This is not the same as **Authentication** → Users (Supabase Auth); this app uses the custom `users` table.
+
 **If you previously had a wrong schema:** Run `scripts/fix_transcripts_schema.sql` in the SQL Editor instead of (or after) `init_db.sql`.
 
 ## 5. Restart your backend

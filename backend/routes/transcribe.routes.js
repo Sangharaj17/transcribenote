@@ -35,6 +35,8 @@ router.post("/finish-stream", authMiddleware, streamController.finishStreamSessi
 
 // Get user's saved notes. Requires auth.
 router.get("/notes", authMiddleware, notesController.getNotes);
+// Update a note's transcript. Requires auth.
+router.patch("/notes/:id", authMiddleware, notesController.updateNote);
 
 // Packet: multipart form with "chunk" + "sessionId". Requires auth.
 router.post(

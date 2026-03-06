@@ -22,7 +22,7 @@ app.use(express.json());
 // CORS for frontend (allow your frontend origin)
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Session-Id, Authorization");
   if (req.method === "OPTIONS") return res.sendStatus(204);
   next();
