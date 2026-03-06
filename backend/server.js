@@ -2,6 +2,7 @@ const express = require("express");
 const http = require("http");
 const path = require("path");
 const { WebSocketServer } = require("ws");
+const fs = require("fs");
 
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 
@@ -28,7 +29,27 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get("/api/health", (req, res) => res.json({ ok: true }));
+function getWhisperCommandForHealth() {
+  if (process.env.WHISPER_PATH) return process.env.WHISPER_PATH;
+  if (process.env.WHISPER_CMD) return process.env.WHISPER_CMD;
+  return process.platform === "win32" ? "py" : "python3";
+}
+
+app.get("/api/health", (req, res) => {
+  const whisperCmd = getWhisperCommandForHealth();
+  const looksLikePath = typeof whisperCmd === "string" && (whisperCmd.includes("/") || whisperCmd.includes("\\"));
+  res.json({
+    ok: true,
+    platform: process.platform,
+    node: process.version,
+    cwd: process.cwd(),
+    env: {
+      whisper_cmd: whisperCmd,
+      whisper_path_exists: looksLikePath ? fs.existsSync(whisperCmd) : null,
+      ffmpeg_path: process.env.FFMPEG_PATH || process.env.FFMPEG_BIN || null,
+    },
+  });
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api", transcribeRoutes);
