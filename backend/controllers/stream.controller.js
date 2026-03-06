@@ -75,7 +75,10 @@ exports.handleAudioStream = (req, res) => {
  */
 exports.finishStreamSession = async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.userId != null ? String(req.userId) : null;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Unauthorized" });
+    }
     const sessionId = (req.body && req.body.sessionId) || req.query.sessionId || "unknown";
     const sessionPath = path.join(streamDir, sessionId);
 
@@ -96,6 +99,7 @@ exports.finishStreamSession = async (req, res) => {
           audio_path: null,
         });
         if (error) console.error("DB save short:", error.message);
+        else console.log("[finish-stream] Saved short message for user", userId.slice(0, 8) + "...");
       } catch (_) {}
       return res.json({
         success: true,
@@ -126,6 +130,7 @@ exports.finishStreamSession = async (req, res) => {
           error: "Failed to save recording. " + (error.message || "Database error"),
         });
       }
+      console.log("[finish-stream] Saved transcript for user", userId.slice(0, 8) + "...");
     } catch (dbErr) {
       console.error("DB save failed:", dbErr.message);
       return res.status(500).json({

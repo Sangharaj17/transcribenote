@@ -278,10 +278,11 @@ Ensure the database has the schema. In Supabase Dashboard → SQL Editor, run:
 | Issue | Fix |
 |-------|-----|
 | Backend won't start | `pm2 logs transcribenote-api` – check .env and Supabase keys |
-| ffmpeg not found | Set `FFMPEG_PATH=/usr/bin/ffmpeg` in .env |
-| Whisper not found | Set `WHISPER_PATH=/home/sangharaj/whisper-venv/bin/python` |
-| Frontend build fails | Ensure client has app/, public/, package.json |
-| Frontend shows wrong API | Rebuild with NEXT_PUBLIC_API_URL in client/.env.local |
+| ffmpeg not found | Set `FFMPEG_PATH=/usr/bin/ffmpeg` in backend .env, restart API |
+| **Whisper not found** (e.g. on mobile) | This happens on the **server** when you stop recording. Set `WHISPER_PATH` in backend .env to the full path to Python that has whisper (e.g. `/home/sangharaj/whisper-venv/bin/python`). Verify: `/home/sangharaj/whisper-venv/bin/python -m whisper --help`. Restart: `pm2 restart transcribenote-api`. |
+| Transcripts not saving (only "too short" in DB) | Same as above: Whisper must run on the server. If Whisper fails, the real transcript is never inserted. Fix Whisper on the server and restart the API. |
+| Client build fails | Ensure client has app/, public/, package.json |
+| Client shows wrong API | Rebuild with NEXT_PUBLIC_API_URL in client/.env.local |
 | 502 Bad Gateway | Check PM2: `pm2 status` – both processes should be "online" |
 | WebSocket fails | Ensure Nginx has `proxy_set_header Upgrade` and `Connection "upgrade"` |
 | CORS errors | Backend allows `*`; ensure client uses correct API URL |

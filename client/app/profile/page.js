@@ -49,12 +49,20 @@ export default function ProfilePage() {
     fetch(`${API_BASE}/api/notes`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.notes) setNotes(data.notes);
-        else setError(data.error || "Failed to load recordings");
+      .then((res) => res.json().then((data) => ({ ok: res.ok, status: res.status, data })))
+      .then(({ ok, status, data }) => {
+        if (ok && data.notes) {
+          setNotes(data.notes);
+          setError("");
+        } else {
+          setNotes([]);
+          setError(status === 401 ? "Session expired. Please sign in again." : (data?.error || "Failed to load recordings"));
+        }
       })
-      .catch(() => setError("Connection failed"))
+      .catch(() => {
+        setNotes([]);
+        setError("Connection failed. Check " + (API_BASE || "API URL") + " and try again.");
+      })
       .finally(() => setLoading(false));
   }, [token]);
 

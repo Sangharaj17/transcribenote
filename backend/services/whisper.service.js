@@ -51,9 +51,10 @@ exports.transcribe = (audioPath, outputDir) => {
 
     whisper.on("error", (err) => {
       if (err.code === "ENOENT") {
+        const cmd = getWhisperCommand();
         reject(
           new Error(
-            `Whisper not found. Install: pip install openai-whisper. Set WHISPER_CMD=python or WHISPER_PATH=C:\\path\\to\\python.exe in .env`
+            `Whisper not found. On the server set WHISPER_PATH to the full path to Python (e.g. /home/user/whisper-venv/bin/python) and ensure openai-whisper is installed. Tried: ${cmd}`
           )
         );
       } else {
