@@ -1,8 +1,9 @@
 const express = require("express");
 const http = require("http");
+const path = require("path");
 const { WebSocketServer } = require("ws");
 
-require("dotenv").config();
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 const transcribeRoutes = require("./routes/transcribe.routes");
 const authRoutes = require("./routes/auth.routes");

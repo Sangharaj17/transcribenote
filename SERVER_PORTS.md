@@ -2,7 +2,9 @@
 
 See **DEPLOYMENT.md** for the full deployment process.
 
+On the VPS the Next.js app lives in **`client/`** (not frontend).
+
 | Service | Port | Domain |
 |---------|------|--------|
-| Frontend (Next.js) | 9000 | transcribe.scrollverse.site |
+| Client (Next.js) | 9000 | transcribe.scrollverse.site |
 | Backend (API + WebSocket) | 9001 | api.transcribe.scrollverse.site |

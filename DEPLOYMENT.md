@@ -73,7 +73,7 @@ git pull origin main
 Ensure you have:
 
 - `backend/` – server.js, config/, controllers/, etc.
-- `frontend/` – app/, public/, package.json, next.config.mjs, etc.
+- `client/` – app/, public/, package.json, next.config.mjs, etc. (Next.js app on VPS)
 
 ---
 
@@ -113,22 +113,22 @@ curl http://localhost:9001/api/health
 
 ---
 
-## 5. Frontend setup
+## 5. Client setup (Next.js app on VPS)
 
 ```bash
-cd ~/projects/transcribenote/frontend
+cd ~/projects/transcribenote/client
 
 # Install dependencies
 npm install
 
-# Set API URL for production (must be set before build)
-export NEXT_PUBLIC_API_URL=https://api.transcribe.scrollverse.site
+# Client env on VPS (so API URL is set for build; no need to export each time)
+echo "NEXT_PUBLIC_API_URL=https://api.transcribe.scrollverse.site" > .env.local
 
-# Build
+# Build (reads NEXT_PUBLIC_API_URL from .env.local)
 npm run build
 ```
 
-**Test frontend:**
+**Test client:**
 
 ```bash
 npm start
@@ -149,8 +149,9 @@ sudo npm install -g pm2
 cd ~/projects/transcribenote/backend
 pm2 start server.js --name transcribenote-api
 
-# Start frontend
-cd ~/projects/transcribenote/frontend
+# Start client (Next.js on port 9000)
+cd ~/projects/transcribenote/client
+# Ensure .env.local exists: NEXT_PUBLIC_API_URL=https://api.transcribe.scrollverse.site
 pm2 start npm --name transcribenote-web -- start
 
 # Save process list so it restarts on reboot
@@ -235,10 +236,11 @@ sudo certbot --nginx -d transcribe.scrollverse.site -d api.transcribe.scrollvers
 sudo certbot renew --dry-run
 ```
 
-After SSL, update `frontend/.env.local` or rebuild with:
+After SSL, update `client/.env.local` or rebuild with:
 
 ```bash
-export NEXT_PUBLIC_API_URL=https://api.transcribe.scrollverse.site
+cd ~/projects/transcribenote/client
+echo "NEXT_PUBLIC_API_URL=https://api.transcribe.scrollverse.site" > .env.local
 npm run build
 pm2 restart transcribenote-web
 ```
@@ -261,7 +263,7 @@ Ensure the database has the schema. In Supabase Dashboard → SQL Editor, run:
 | 2 | Whisper in venv; note Python path |
 | 3 | Full repo cloned |
 | 4 | Backend: npm install, .env with Supabase, JWT, Deepgram, FFMPEG_PATH, WHISPER_PATH |
-| 5 | Frontend: npm install, NEXT_PUBLIC_API_URL=https://api.transcribe.scrollverse.site, npm run build |
+| 5 | Client: npm install, .env.local with NEXT_PUBLIC_API_URL, npm run build |
 | 6 | PM2: transcribenote-api, transcribenote-web; pm2 save; pm2 startup |
 | 7 | Nginx: copy config, enable, reload |
 | 8 | DNS: A records for transcribe.scrollverse.site and api.transcribe.scrollverse.site |
@@ -278,11 +280,11 @@ Ensure the database has the schema. In Supabase Dashboard → SQL Editor, run:
 | Backend won't start | `pm2 logs transcribenote-api` – check .env and Supabase keys |
 | ffmpeg not found | Set `FFMPEG_PATH=/usr/bin/ffmpeg` in .env |
 | Whisper not found | Set `WHISPER_PATH=/home/sangharaj/whisper-venv/bin/python` |
-| Frontend build fails | Ensure frontend has app/, public/, package.json |
-| Frontend shows wrong API | Rebuild with `NEXT_PUBLIC_API_URL=https://api.transcribe.scrollverse.site` |
+| Frontend build fails | Ensure client has app/, public/, package.json |
+| Frontend shows wrong API | Rebuild with NEXT_PUBLIC_API_URL in client/.env.local |
 | 502 Bad Gateway | Check PM2: `pm2 status` – both processes should be "online" |
 | WebSocket fails | Ensure Nginx has `proxy_set_header Upgrade` and `Connection "upgrade"` |
-| CORS errors | Backend allows `*`; ensure frontend uses correct API URL |
+| CORS errors | Backend allows `*`; ensure client uses correct API URL |
 
 ---
 
@@ -290,5 +292,5 @@ Ensure the database has the schema. In Supabase Dashboard → SQL Editor, run:
 
 | Service | Port | Domain |
 |---------|------|--------|
-| Frontend (Next.js) | 9000 | transcribe.scrollverse.site |
+| Client (Next.js) | 9000 | transcribe.scrollverse.site |
 | Backend (API + WebSocket) | 9001 | api.transcribe.scrollverse.site |
